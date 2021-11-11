@@ -3,7 +3,7 @@ kind: Deployment
 apiVersion: apps/v1
 metadata:
   name: upg-loadme
-  namespace: demo
+  namespace: kube-system
   labels:
     app: upg-loadme
 spec:
@@ -20,7 +20,8 @@ spec:
       containers:
         - name: upg-loadme
           # update image id (manual or via jenkins)
-          image: '8261XXXXXXXX.dkr.ecr.us-east-1.amazonaws.com/shashank-upg-loadme:1'
+          # image: '8261XXXXXXXX.dkr.ecr.us-east-1.amazonaws.com/shashank-upg-loadme:1'
+          image: '350465793522.dkr.ecr.us-east-1.amazonaws.com/devops-eks-capstone'
           # limiting cpu & mem usage of a pod
           resources:
             requests:
@@ -30,6 +31,10 @@ spec:
               cpu: 1000m
               memory: 400Mi
           imagePullPolicy: Always
+      tolerations:
+      - key: "feaster"
+        operator: Equal
+        value: "true"
       restartPolicy: Always
       terminationGracePeriodSeconds: 10
       dnsPolicy: ClusterFirst
@@ -40,7 +45,7 @@ kind: Service
 apiVersion: v1
 metadata:
   name: upg-loadme
-  namespace: demo
+  namespace: kube-system
 spec:
   selector:
     app: upg-loadme
