@@ -1,9 +1,9 @@
 ---
-apiVersion: autoscaling/v1
+apiVersion: autoscaling/v2beta2
 kind: HorizontalPodAutoscaler
 metadata:
   name: upg-loadme
-  namespace: kube-system
+  namespace: demo
 spec:
   # Add hpa spec as per requirement
   # Refer: https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale-walkthrough/#creating-the-autoscaler-declaratively
@@ -13,7 +13,7 @@ spec:
     kind: Deployment
     name: upg-loadme
   minReplicas: 1
-  maxReplicas: 3
+  maxReplicas: 5
   metrics:
   - type: Resource
     resource:

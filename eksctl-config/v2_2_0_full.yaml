@@ -549,7 +549,7 @@ metadata:
   labels:
     app.kubernetes.io/name: aws-load-balancer-controller
   name: aws-load-balancer-controller-leader-election-role
-  namespace: kube-system
+  namespace: demo
 rules:
 - apiGroups:
   - ""
@@ -723,7 +723,7 @@ metadata:
   labels:
     app.kubernetes.io/name: aws-load-balancer-controller
   name: aws-load-balancer-controller-leader-election-rolebinding
-  namespace: kube-system
+  namespace: demo
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
@@ -731,7 +731,7 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: aws-load-balancer-controller
-  namespace: kube-system
+  namespace: demo
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -746,7 +746,7 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: aws-load-balancer-controller
-  namespace: kube-system
+  namespace: demo
 ---
 apiVersion: v1
 kind: Service
@@ -754,7 +754,7 @@ metadata:
   labels:
     app.kubernetes.io/name: aws-load-balancer-controller
   name: aws-load-balancer-webhook-service
-  namespace: kube-system
+  namespace: demo
 spec:
   ports:
   - port: 443
@@ -770,7 +770,7 @@ metadata:
     app.kubernetes.io/component: controller
     app.kubernetes.io/name: aws-load-balancer-controller
   name: aws-load-balancer-controller
-  namespace: kube-system
+  namespace: demo
 spec:
   replicas: 1
   selector:
@@ -833,11 +833,11 @@ metadata:
   labels:
     app.kubernetes.io/name: aws-load-balancer-controller
   name: aws-load-balancer-serving-cert
-  namespace: kube-system
+  namespace: demo
 spec:
   dnsNames:
-  - aws-load-balancer-webhook-service.kube-system.svc
-  - aws-load-balancer-webhook-service.kube-system.svc.cluster.local
+  - aws-load-balancer-webhook-service.demo.svc
+  - aws-load-balancer-webhook-service.demo.svc.cluster.local
   issuerRef:
     kind: Issuer
     name: aws-load-balancer-selfsigned-issuer
@@ -849,7 +849,7 @@ metadata:
   labels:
     app.kubernetes.io/name: aws-load-balancer-controller
   name: aws-load-balancer-selfsigned-issuer
-  namespace: kube-system
+  namespace: demo
 spec:
   selfSigned: {}
 ---
@@ -857,7 +857,7 @@ apiVersion: admissionregistration.k8s.io/v1
 kind: MutatingWebhookConfiguration
 metadata:
   annotations:
-    cert-manager.io/inject-ca-from: kube-system/aws-load-balancer-serving-cert
+    cert-manager.io/inject-ca-from: demo/aws-load-balancer-serving-cert
   labels:
     app.kubernetes.io/name: aws-load-balancer-controller
   name: aws-load-balancer-webhook
@@ -867,7 +867,7 @@ webhooks:
   clientConfig:
     service:
       name: aws-load-balancer-webhook-service
-      namespace: kube-system
+      namespace: demo
       path: /mutate-v1-pod
   failurePolicy: Fail
   name: mpod.elbv2.k8s.aws
@@ -898,7 +898,7 @@ webhooks:
   clientConfig:
     service:
       name: aws-load-balancer-webhook-service
-      namespace: kube-system
+      namespace: demo
       path: /mutate-elbv2-k8s-aws-v1beta1-targetgroupbinding
   failurePolicy: Fail
   name: mtargetgroupbinding.elbv2.k8s.aws
@@ -918,7 +918,7 @@ apiVersion: admissionregistration.k8s.io/v1
 kind: ValidatingWebhookConfiguration
 metadata:
   annotations:
-    cert-manager.io/inject-ca-from: kube-system/aws-load-balancer-serving-cert
+    cert-manager.io/inject-ca-from: demo/aws-load-balancer-serving-cert
   labels:
     app.kubernetes.io/name: aws-load-balancer-controller
   name: aws-load-balancer-webhook
@@ -928,7 +928,7 @@ webhooks:
   clientConfig:
     service:
       name: aws-load-balancer-webhook-service
-      namespace: kube-system
+      namespace: demo
       path: /validate-elbv2-k8s-aws-v1beta1-targetgroupbinding
   failurePolicy: Fail
   name: vtargetgroupbinding.elbv2.k8s.aws
@@ -948,7 +948,7 @@ webhooks:
   clientConfig:
     service:
       name: aws-load-balancer-webhook-service
-      namespace: kube-system
+      namespace: demo
       path: /validate-networking-v1beta1-ingress
   failurePolicy: Fail
   matchPolicy: Equivalent

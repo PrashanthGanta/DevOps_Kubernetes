@@ -1,7 +1,4 @@
-
-
-
-
+========================= Refererence notes================
 
 cluster name: eks-upgrad-capstone
 
@@ -13,10 +10,6 @@ Key: kubernetes.io/role/elb Value: 1
 
 Private-subnets
 Key: kubernetes.io/role/internal-elb Value: 1
-
-
-
-
 
 
 ========Create IAM OIDC provider (can create manually in IAM > Identity Providers=======
@@ -114,3 +107,23 @@ eksctl create iamserviceaccount --cluster=eks-upgrad-capstone --namespace=kube-s
 helm install aws-load-balancer-controller eks/aws-load-balancer-controller -n kube-system --set clusterName=eks-upgrad-capstone --set serviceAccount.create=false --set serviceAccount.name=aws-load-balancer-controller
 
 helm install aws-load-balancer-controller eks/aws-load-balancer-controller -n kube-system --set clusterName=eks-upgrad-capstone
+
+====================================================Helm prometheus===============================
+$ helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+
+$ kubectl create ns prom
+$ helm install prometheus prometheus-community/kube-prometheus-stack -n prom
+
+$ kubectl get all -n prom
+
+kubectl port-forward -n prom prometheus-prom-kube-prometheus-stack-prometheus-0 9090
+kubectl port-forward -n prom prom-grafana-6c578f9954-rjdmk 3000
+
+kubectl port-forward -n demo prometheus-prometheus-kube-prometheus-prometheus-0  --address 0.0.0.0 9090:9090
+
+kubectl port-forward -n demo prometheus-grafana-57468f6c-p7rls --address 0.0.0.0 3000:3000
+
+============load to url with ab====================
+ab -n300 -c10 'http://k8s-demo-upgloadm-d1877ac40b-1171554919.us-east-1.elb.amazonaws.com/load?scale=100'
+
+ab -n100 -c10 'http://k8s-demo-upgloadm-d1877ac40b-1464663692.us-east-1.elb.amazonaws.com/load?scale=100'

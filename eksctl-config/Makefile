@@ -1,8 +1,8 @@
 create_cluster:
-	eksctl create cluster -f cluster.yaml
+	eksctl create cluster -f my-eks-conf.yaml
 
 delete_cluster:
-	eksctl delete cluster -f cluster.yaml
+	eksctl delete cluster -f my-eks-conf.yaml
 
 describe_cluster:
 	eksctl utils describe-stacks --region=us-east-1 --cluster=eks-upgrad-capstone
@@ -28,7 +28,7 @@ create_iam_policy:
 create_service_account:
 	eksctl create iamserviceaccount \
       --cluster=eks-upgrad-capstone \
-      --namespace=kube-system \
+      --namespace=demo \
       --name=aws-load-balancer-controller \
       --attach-policy-arn=arn:aws:iam::350465793522:policy/AWSLoadBalancerControllerIAMPolicy \
       --override-existing-serviceaccounts \
@@ -43,7 +43,7 @@ deploy_ingress_controller:
 	kubectl apply -f v2_2_0_full.yaml
 
 deploy_application:
-	kubectl apply -f -
+	kubectl apply -f C:\Users\ganta\OneDrive\UpGrad\M5\Capstone\DevOps_Kubernetes\upg-loadme-manifests\upg-loadme.yaml
 
 delete_application:
 	kustomize build ./k8s | kubectl delete -f -
