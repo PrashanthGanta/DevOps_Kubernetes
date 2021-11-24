@@ -1,0 +1,129 @@
+========================= Refererence notes================
+
+cluster name: eks-upgrad-capstone
+
+ALL-subnets
+Key: kubernetes.io/cluster/eks-upgrad-capstone Value: shared
+
+Public-subnets
+Key: kubernetes.io/role/elb Value: 1
+
+Private-subnets
+Key: kubernetes.io/role/internal-elb Value: 1
+
+
+========Create IAM OIDC provider (can create manually in IAM > Identity Providers=======
+
+eksctl utils associate-iam-oidc-provider --region us-east-1 --cluster eks-upgrad-capstone --approve
+
+=============Create an IAM policy called ALBIngressControllerIAMPolicy and attach the iam-policy.yaml=================
+curl -o iam-policy.json https://raw.githubusercontent.com/kubernetes-sigs/aws-alb-ingress-controller/v1.1.8/docs/examples/iam-policy.json
+aws iam create-policy --policy-name ALBIngressControllerIAMPolicy --policy-document file://iam-policy.json
+
+{   
+    "Policy": {
+        "PolicyName": "ALBIngressControllerIAMPolicy",
+        "PolicyId": "ANPAVDGLDTXZGWHWUUE34",
+        "Arn": "arn:aws:iam::350465793522:policy/ALBIngressControllerIAMPolicy",
+        "Path": "/",
+        "DefaultVersionId": "v1",
+        "AttachmentCount": 0,
+        "PermissionsBoundaryUsageCount": 0,
+        "IsAttachable": true,
+        "CreateDate": "2021-11-15T14:47:49Z",
+        "UpdateDate": "2021-11-15T14:47:49Z"
+    }
+}
+
+
+=======Create a Kubernetes service account named alb-ingress-controller in the kube-system namespace, a cluster role, and a cluster role binding for the ALB Ingress Controller to use with the following command=======
+
+curl -o rbac-role-alb-ingress-controller.yaml https://raw.githubusercontent.com/kubernetes-sigs/aws-alb-ingress-controller/v1.1.8/docs/examples/rbac-role.yaml
+kubectl apply -f rbac-role-alb-ingress-controller.yaml
+=======================================================
+-----B. Create IAM role and attach the trust relationship:---------
+aws iam create-role --role-name eks-alb-ingress-controller --assume-role-policy-document file://trust.json
+
+{
+    "Role": {
+        "Path": "/",
+        "RoleName": "eks-alb-ingress-controller",
+        "RoleId": "AROAVDGLDTXZNT6KI44JT",
+        "Arn": "arn:aws:iam::350465793522:role/eks-alb-ingress-controller",
+        "CreateDate": "2021-11-15T17:23:18Z",
+        "AssumeRolePolicyDocument": {
+            "Version": "2012-10-17",
+            "Statement": [
+                {
+                    "Effect": "Allow",
+                    "Principal": {
+                        "Federated": "arn:aws:iam::350465793522:oidc-provider/oidc.eks.us-east-1.amazonaws.com/id/35B6A43377A4344CF7C3691FF7C9638D"
+                    },
+                    "Action": "sts:AssumeRoleWithWebIdentity",
+                    "Condition": {
+                        "StringEquals": {
+                            "<OIDC url>:sub": "system:serviceaccount:kube-system:alb-ingress-controller"
+                        }
+                    }
+                }
+            ]
+        }
+    }
+}
+
+======================C. Attach the ALBIngressControllerIAMPolicy to the alb role===========
+"arn:aws:iam::350465793522:policy/ALBIngressControllerIAMPolicy"
+aws iam attach-role-policy --role-name eks-alb-ingress-controller --policy-arn="arn:aws:iam::350465793522:policy/ALBIngressControllerIAMPolicy"
+
+
+-==================D. Annotate the controller pod to use the role:==================
+kubectl annotate serviceaccount -n kube-system alb-ingress-controller eks.amazonaws.com/role-arn=arn:aws:iam::350465793522:role/eks-alb-ingress-controller
+
+========E. Add the following policies to the alb role:=================
+aws iam attach-role-policy --role-name eks-alb-ingress-controller --policy-arn arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy
+aws iam attach-role-policy --role-name eks-alb-ingress-controller --policy-arn arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy
+
+
+=======Deploy alb-ingress-controller==========
+---------------A. Download the alb controller yaml locally-----------
+
+
+
+
+
+
+------------------------------------------------------------=========================-----------------------
+curl -o iam-policy.json https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v2.2.1/docs/install/iam_policy.json
+
+
+aws iam create-policy --policy-name AWSLoadBalancerControllerIAMPolicy --policy-document file://iam-policy.json
+
+arn:aws:elasticloadbalancing:us-east-1:350465793522:loadbalancer/app/my-alb/127b57f67df2426e
+
+eksctl create iamserviceaccount --cluster=eks-upgrad-capstone --namespace=kube-system --name=aws-load-balancer-controller --attach-policy-arn=arn:aws:elasticloadbalancing:us-east-1:350465793522:loadbalancer/app/my-alb/127b57f67df2426e --override-existing-serviceaccounts --approve
+
+
+
+helm install aws-load-balancer-controller eks/aws-load-balancer-controller -n kube-system --set clusterName=eks-upgrad-capstone --set serviceAccount.create=false --set serviceAccount.name=aws-load-balancer-controller
+
+helm install aws-load-balancer-controller eks/aws-load-balancer-controller -n kube-system --set clusterName=eks-upgrad-capstone
+
+====================================================Helm prometheus===============================
+$ helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+
+$ kubectl create ns prom
+$ helm install prometheus prometheus-community/kube-prometheus-stack -n prom
+
+$ kubectl get all -n prom
+
+kubectl port-forward -n prom prometheus-prom-kube-prometheus-stack-prometheus-0 9090
+kubectl port-forward -n prom prom-grafana-6c578f9954-rjdmk 3000
+
+kubectl port-forward -n demo prometheus-prometheus-kube-prometheus-prometheus-0  --address 0.0.0.0 9090:9090
+
+kubectl port-forward -n demo prometheus-grafana-57468f6c-p7rls --address 0.0.0.0 3000:3000
+
+============load to url with ab====================
+ab -n300 -c10 'http://k8s-demo-upgloadm-d1877ac40b-1171554919.us-east-1.elb.amazonaws.com/load?scale=100'
+
+ab -n100 -c10 'http://k8s-demo-upgloadm-d1877ac40b-1464663692.us-east-1.elb.amazonaws.com/load?scale=100'
